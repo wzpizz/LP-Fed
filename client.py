@@ -70,26 +70,23 @@ class Client():
         self.distance=0
         self.optimization = Optimization(self.train_loader, self.device)
         self.sim_map = Sim_map(self.train_loader, self.device)
-        # print("class name size",class_names_size[cid])
-        # train_data = self.data.train_loaders[cid]
-        # self.eta = et
-        # self.rand_percent = rp
-        # self.layer_idx = li
-        # self.loss = nn.CrossEntropyLoss()
-        # self.ALA = ALA(self.cid, self.loss, train_data, self.batch_size,
-        #                self.rand_percent, self.layer_idx, self.eta, self.device)
+
+
+
+
 
     def train(self, federated_model, use_cuda):
         self.y_err = []
         self.y_loss = []
-        # # model.load_state_dict 加载模型
-
-
-
-        self.model.load_state_dict(federated_model.state_dict())
-        # print(federated_model)
         self.model.classifier.classifier = self.classifier
         self.old_classifier = copy.deepcopy(self.classifier)
+        c = self.sim_map.compute_similarity(federated_model, self.old_classifier, self.model)
+        model1 = add_model(federated_model, self.model, 1-c, c)
+        self.model.load_state_dict(model1.state_dict(), strict=False)
+
+
+        self.model.classifier.classifier = self.classifier
+
         self.model = self.model.to(self.device)
 
         optimizer = get_optimizer(self.model, self.lr)
@@ -158,187 +155,8 @@ class Client():
         self.model.classifier.classifier = nn.Sequential()
 
 
-    # def train(self, federated_model, use_cuda):
-    #     self.y_err = []
-    #     self.y_loss = []
-    #     self.model.classifier.classifier = self.classifier
-    #     self.old_classifier = copy.deepcopy(self.classifier)
-    #     # c=self.optimization.get_gexinghua(federated_model, self.old_classifier, self.model)
-    #     # c=self.optimization.get_similarity_cca(federated_model, self.old_classifier, self.model)
-    #     # c = self.optimization.mse_feature_distance(federated_model, self.old_classifier, self.model)
-    #     c = self.sim_map.compute_similarity(federated_model, self.old_classifier, self.model)
-    #     model1 = add_model(federated_model, self.model, 1-c, c)
-    #     # print(c)
-    #     # if(c > 0):
-    #     #     # cL+(1-c)F
-    #     # model1 = add_model(federated_model, self.model, 1 - c, c)
-    #     # #     # (1-c)l+cf
-    #     # model1 = add_model(federated_model, self.model, c ,1 - c)
-    #     self.model.load_state_dict(model1.state_dict(), strict=False)
-    #     # else:
-    #     #     self.model.load_state_dict(federated_model.state_dict(), strict=False)
-    #
-    #
-    #     self.model.classifier.classifier = self.classifier
-    #     # self.old_classifier = copy.deepcopy(self.classifier)
-    #     self.model = self.model.to(self.device)
-    #
-    #     optimizer = get_optimizer(self.model, self.lr)
-    #     scheduler = lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
-    #
-    #     criterion = nn.CrossEntropyLoss()
-    #
-    #     since = time.time()
-    #
-    #     print('Client', self.cid, 'start training')
-    #     for epoch in range(self.local_epoch):
-    #         print('Epoch {}/{}'.format(epoch, self.local_epoch - 1))
-    #         print('-' * 10)
-    #
-    #         scheduler.step()
-    #         self.model.train(True)
-    #         running_loss = 0.0
-    #         running_corrects = 0.0
-    #
-    #         for data in self.train_loader:
-    #             inputs, labels = data
-    #             b, c, h, w = inputs.shape
-    #             if b < self.batch_size:
-    #                 continue
-    #             if use_cuda:
-    #                 inputs = Variable(inputs.cuda().detach())
-    #                 labels = Variable(labels.cuda().detach())
-    #             else:
-    #                 inputs, labels = Variable(inputs), Variable(labels)
-    #
-    #             optimizer.zero_grad()
-    #
-    #             outputs = self.model(inputs)
-    #             _, preds = torch.max(outputs.data, 1)
-    #             loss = criterion(outputs, labels)
-    #             loss.backward()
-    #
-    #             optimizer.step()
-    #
-    #             running_loss += loss.item() * b
-    #             running_corrects += float(torch.sum(preds == labels.data))
-    #
-    #         used_data_sizes = (self.dataset_sizes - self.dataset_sizes % self.batch_size)
-    #         epoch_loss = running_loss / used_data_sizes
-    #         epoch_acc = running_corrects / used_data_sizes
-    #
-    #         print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-    #             'train', epoch_loss, epoch_acc))
-    #
-    #         self.y_loss.append(epoch_loss)
-    #         self.y_err.append(1.0-epoch_acc)
-    #
-    #         time_elapsed = time.time() - since
-    #         print('Client', self.cid, ' Training complete in {:.0f}m {:.0f}s'.format(
-    #             time_elapsed // 60, time_elapsed % 60))
-    #
-    #     time_elapsed = time.time() - since
-    #     print('Client', self.cid, 'Training complete in {:.0f}m {:.0f}s'.format(
-    #         time_elapsed // 60, time_elapsed % 60))
-    #
-    #
-    #     # save_network(self.model, self.cid, 'last', self.project_dir, self.model_name, gpu_ids)
-    #
-    #     self.classifier = self.model.classifier.classifier
-    #     self.distance = self.optimization.cdw_feature_distance(federated_model, self.old_classifier, self.model)
-    #     self.model.classifier.classifier = nn.Sequential()
 
 
-
-    # def train(self, federated_model,cdw, use_cuda):
-    #     self.y_err = []
-    #     self.y_loss = []
-    #
-    #
-    #     # model.load_state_dict 加载模型
-    #     #print(federated_model)
-    #     self.model.classifier.classifier = self.classifier
-    #     self.old_classifier = copy.deepcopy(self.classifier)
-    #     # c=self.optimization.get_gexinghua(federated_model, self.old_classifier, self.model)
-    #     # c=self.optimization.get_similarity_cca(federated_model, self.old_classifier, self.model)
-    #     c = self.optimization.get_similarity_cka(federated_model, self.old_classifier, self.model)
-    #     # print(c)
-    #     # if(c > 0):
-    #     #     # cL+(1-c)F
-    #     model1 = add_model(federated_model, self.model, 1-c, c)
-    #     # #     # (1-c)l+cf
-    #     # model1 = add_model(federated_model, self.model, c ,1 - c)
-    #     self.model.load_state_dict(model1.state_dict(), strict=False)
-    #     # else:
-    #     #     self.model.load_state_dict(federated_model.state_dict(), strict=False)
-    #
-    #     self.model.classifier.classifier = self.classifier
-    #     # self.old_classifier = copy.deepcopy(self.classifier)
-    #     self.model = self.model.to(self.device)
-    #
-    #     optimizer = get_optimizer(self.model, self.lr)
-    #     scheduler = lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
-    #
-    #     criterion = nn.CrossEntropyLoss()
-    #
-    #     since = time.time()
-    #
-    #     print('Client', self.cid, 'start training')
-    #     for epoch in range(self.local_epoch):
-    #         print('Epoch {}/{}'.format(epoch, self.local_epoch - 1))
-    #         print('-' * 10)
-    #
-    #         scheduler.step()
-    #         self.model.train(True)
-    #         running_loss = 0.0
-    #         running_corrects = 0.0
-    #
-    #         for data in self.train_loader:
-    #             inputs, labels = data
-    #             b, c, h, w = inputs.shape
-    #             if b < self.batch_size:
-    #                 continue
-    #             if use_cuda:
-    #                 inputs = Variable(inputs.cuda().detach())
-    #                 labels = Variable(labels.cuda().detach())
-    #             else:
-    #                 inputs, labels = Variable(inputs), Variable(labels)
-    #
-    #             optimizer.zero_grad()
-    #
-    #             outputs = self.model(inputs)
-    #             _, preds = torch.max(outputs.data, 1)
-    #             loss = criterion(outputs, labels)
-    #             loss.backward()
-    #
-    #             optimizer.step()
-    #
-    #             running_loss += loss.item() * b
-    #             running_corrects += float(torch.sum(preds == labels.data))
-    #
-    #         used_data_sizes = (self.dataset_sizes - self.dataset_sizes % self.batch_size)
-    #         epoch_loss = running_loss / used_data_sizes
-    #         epoch_acc = running_corrects / used_data_sizes
-    #
-    #         print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-    #             'train', epoch_loss, epoch_acc))
-    #
-    #         self.y_loss.append(epoch_loss)
-    #         self.y_err.append(1.0 - epoch_acc)
-    #
-    #         time_elapsed = time.time() - since
-    #         print('Client', self.cid, ' Training complete in {:.0f}m {:.0f}s'.format(
-    #             time_elapsed // 60, time_elapsed % 60))
-    #
-    #     time_elapsed = time.time() - since
-    #     print('Client', self.cid, 'Training complete in {:.0f}m {:.0f}s'.format(
-    #         time_elapsed // 60, time_elapsed % 60))
-    #
-    #     # save_network(self.model, self.cid, 'last', self.project_dir, self.model_name, gpu_ids)
-    #
-    #     self.classifier = self.model.classifier.classifier
-    #     self.distance = self.optimization.cdw_feature_distance(federated_model, self.old_classifier, self.model)
-    #     self.model.classifier.classifier = nn.Sequential()
     def generate_soft_label(self, x, regularization):
         return self.optimization.kd_generate_soft_label(self.model, x, regularization)
 
